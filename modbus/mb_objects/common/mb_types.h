@@ -146,6 +146,25 @@ typedef enum {
 } mb_err_enum_t;
 
 /*! \ingroup modbus
+ *  \brief Carry a verbatim Modbus exception code out of a register callback.
+ *
+ * A slave register callback reports failure as an \c mb_err_enum_t, and
+ * mb_error_to_exception() can turn that into only three of the sixteen
+ * exception codes: 0x02, 0x04 and 0x06. An application that answers for
+ * something other than its own register image -- a gateway, most of all --
+ * needs the rest: it has to report 0x0B when the device behind it does not
+ * answer, 0x0A when it has no route to it, and the code that device sent
+ * when it sent one.
+ *
+ * Returning \c MB_ERR_EXCEPTION(code) from a register callback makes the
+ * stack put \c code on the wire unchanged. The values stay clear of the
+ * enumerators above, which end well below 0x80, so existing callbacks are
+ * unaffected.
+ */
+#define MB_ERR_EXCEPTION_FLAG   (0x80)
+#define MB_ERR_EXCEPTION(code)  ((mb_err_enum_t)(MB_ERR_EXCEPTION_FLAG | ((code) & 0x7F)))
+
+/*! \ingroup modbus
  *  \brief TimerMode is Master 3 kind of Timer modes.
  */
 typedef enum {

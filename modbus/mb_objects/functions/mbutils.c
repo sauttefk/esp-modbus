@@ -112,6 +112,14 @@ mb_exception_t mb_error_to_exception(mb_err_enum_t error_code)
 {
     mb_exception_t    status;
 
+    /* A callback that answers for a device other than this one needs every
+       exception code, not the three the switch below can produce. Such a
+       callback returns MB_ERR_EXCEPTION(code), which arrives here with the
+       flag bit set and is handed on verbatim. */
+    if ((unsigned)error_code & MB_ERR_EXCEPTION_FLAG) {
+        return (mb_exception_t)((unsigned)error_code & 0x7F);
+    }
+
     switch (error_code) {
     case MB_ENOERR:
         status = MB_EX_NONE;
