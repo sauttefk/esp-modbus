@@ -101,6 +101,15 @@ mb_err_enum_t mbm_get_handler_count(mb_base_t *inst, uint16_t *count)
     return MB_ENOERR;
 }
 
+mb_err_enum_t mbm_get_last_exception(mb_base_t *inst, uint8_t *exception)
+{
+    MB_RETURN_ON_FALSE((inst && exception), MB_EINVAL, TAG,
+                       "get last exception wrong arguments.");
+    mbm_object_t *mbm_obj = MB_GET_OBJ_CTX(inst, mbm_object_t, base);
+    *exception = (uint8_t)mbm_obj->exception;
+    return MB_ENOERR;
+}
+
 static mb_exception_t mbm_check_invoke_handler(mb_base_t *inst, uint8_t func_code, uint8_t *buf, uint16_t *len)
 {
     mbm_object_t *mbm_obj = MB_GET_OBJ_CTX(inst, mbm_object_t, base);
@@ -116,6 +125,12 @@ static mb_exception_t mbm_check_invoke_handler(mb_base_t *inst, uint8_t func_cod
             return MB_EX_ILLEGAL_DATA_VALUE;
         }
         exception = (mb_exception_t)buf[MB_PDU_DATA_OFF];
+        /* Keep the code the slave sent. The caller turns every non-zero
+           exception into EV_ERROR_EXECUTE_FUNCTION and the controller reports
+           ESP_FAIL, so without this the distinction between "illegal data
+           address" and "slave device failure" is lost. A gateway has to pass
+           the original code on to its own client. */
+        mbm_obj->exception = exception;
         return exception;
     }
     SEMA_SECTION(mbm_obj->handler_descriptor.sema, MB_HANDLER_UNLOCK_TICKS) {
@@ -586,6 +601,9 @@ mb_err_enum_t mbm_poll(mb_base_t *inst)
             }
             // Initialize modbus transaction
             mbm_obj->curr_trans_id = event.trans_id;
+            /* A transaction that times out never reaches EV_EXECUTE, so the
+               field has to be cleared here rather than on the response. */
+            mbm_obj->exception = MB_EX_NONE;
             break;
 
         case EV_FRAME_SENT:

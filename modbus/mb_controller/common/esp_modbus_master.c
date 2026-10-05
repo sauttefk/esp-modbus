@@ -64,6 +64,19 @@ esp_err_t mbc_master_unlock(void *ctx)
     return ESP_OK;
 }
 
+esp_err_t mbc_master_get_last_exception(void *ctx, uint8_t *exception)
+{
+    MB_RETURN_ON_FALSE(ctx, ESP_ERR_INVALID_STATE, TAG,
+                       "Master interface is not correctly initialized.");
+    MB_RETURN_ON_FALSE(exception, ESP_ERR_INVALID_ARG, TAG,
+                       "Incorrect exception pointer.");
+    mbm_controller_iface_t *mbm_controller = MB_MASTER_GET_IFACE(ctx);
+    MB_RETURN_ON_FALSE(mbm_controller->mb_base, ESP_ERR_INVALID_STATE, TAG,
+                       "Master interface is not correctly configured.");
+    mb_err_enum_t ret = mbm_get_last_exception(mbm_controller->mb_base, exception);
+    return MB_ERR_TO_ESP_ERR(ret);
+}
+
 esp_err_t mbc_master_get_cid_info(void *ctx, uint16_t cid, const mb_parameter_descriptor_t **param_info)
 {
     esp_err_t error = ESP_OK;

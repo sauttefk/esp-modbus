@@ -315,6 +315,30 @@ esp_err_t mbc_master_set_descriptor(void *ctx, const mb_parameter_descriptor_t *
 esp_err_t mbc_master_send_request(void *ctx, mb_param_request_t *request, void *data_ptr);
 
 /**
+ * @brief The exception code carried by the last response from a slave
+ *
+ * A request that a slave answers with an exception makes the send request
+ * functions return ESP_FAIL, which does not say which exception it was. This
+ * reports the code the slave actually sent, so a caller that has to relay it --
+ * a gateway forwarding to its own client, for instance -- can pass the original
+ * on instead of substituting one of its own.
+ *
+ * The value is cleared when a transaction starts, so a request that times out
+ * leaves it at MB_EX_NONE rather than holding the previous transaction's code.
+ * Read it directly after the failed request.
+ *
+ * @param[in] ctx context pointer of the initialized modbus interface
+ * @param[out] exception the exception code, or MB_EX_NONE (0) if the last
+ *             transaction did not end in an exception
+ *
+ * @return
+ *     - esp_err_t ESP_OK - success
+ *     - esp_err_t ESP_ERR_INVALID_STATE - the interface is not initialized
+ *     - esp_err_t ESP_ERR_INVALID_ARG - the exception pointer is NULL
+ */
+esp_err_t mbc_master_get_last_exception(void *ctx, uint8_t *exception);
+
+/**
  * @brief Get information about supported characteristic defined as cid. Uses parameter description table to get
  *        this information. The function will check if characteristic defined as a cid parameter is supported
  *        and returns its description in param_info. Returns ESP_ERR_NOT_FOUND if characteristic is not supported.

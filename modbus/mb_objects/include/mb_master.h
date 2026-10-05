@@ -57,6 +57,10 @@ mb_err_enum_t mbm_delete_handler(mb_base_t *inst, uint8_t func_code);
 // The helper function to get count of handlers for master
 mb_err_enum_t mbm_get_handler_count(mb_base_t *inst, uint16_t *count);
 
+// The exception code of the last response, or MB_EX_NONE when the last
+// transaction did not end in one. Cleared when a transaction starts.
+mb_err_enum_t mbm_get_last_exception(mb_base_t *inst, uint8_t *exception);
+
 #ifdef __cplusplus
 }
 #endif
